@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "psutils"
+]
+[profile.release]
+panic = "unwind"
