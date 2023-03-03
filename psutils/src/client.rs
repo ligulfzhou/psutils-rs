@@ -93,7 +93,7 @@ impl Client {
         Ok(res)
     }
 
-    pub fn exec(&mut self, cmd: &str) -> Result<String, PSError> {
+    pub fn exec(&self, cmd: &str) -> Result<String, PSError> {
         match &self.sess {
             Some(s) => {
                 let cli = s.clone();
@@ -105,7 +105,7 @@ impl Client {
                 return Ok(s);
             }
             _ => {
-                let _ = self.connect();
+                // let _ = self.connect();
                 return Err(PSError::ConnectinError("Not Connected..."));
             }
         }
