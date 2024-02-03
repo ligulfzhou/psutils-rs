@@ -1,5 +1,5 @@
 use crate::client::Client;
-use crate::errors::PSError;
+use crate::errors::{PSError, PSResult};
 
 #[derive(Debug)]
 pub struct Load {
@@ -9,7 +9,7 @@ pub struct Load {
 }
 
 impl Client {
-    pub fn load(&mut self) -> Result<Load, PSError> {
+    pub fn load(&mut self) -> PSResult<Load> {
         let res = self.content("/proc/loadavg")?;
 
         let sp: Vec<&str> = res.split(' ').collect();

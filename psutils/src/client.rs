@@ -1,4 +1,4 @@
-use crate::errors::PSError;
+use crate::errors::{PSError, PSResult};
 use ssh2::Session;
 use std::fs::File;
 use std::io::Read;
@@ -35,12 +35,12 @@ impl Client {
         }
     }
 
-    pub fn connect(&mut self) -> Result<(), PSError> {
+    pub fn connect(&mut self) -> PSResult<()> {
         let tcp = TcpStream::connect(format!("{}:{}", &self.host, self.port.unwrap_or(22)))
-            .map_err(|_err| PSError::SessionError("TCP Stream failed"))?;
+            .map_err(|_err| PSError::SessionError("TCP Stream failed".to_string()))?;
 
-        let mut sess =
-            Session::new().map_err(|_err| PSError::SessionError("New Session failed"))?;
+        let mut sess = Session::new()
+            .map_err(|_err| PSError::SessionError("New Session failed".to_string()))?;
         sess.set_tcp_stream(tcp);
         sess.handshake().unwrap();
 
@@ -68,12 +68,22 @@ impl Client {
 
         if password != "" && private_key_string != "" {
             // private key + keypass
+            sess.userauth_pubkey_memory(&self.username, None, private_key_string, Some(password))
+                .map_err(|err| {
+                    PSError::ConnectinError(
+                        "userauth with private key+passphrase failed.".to_string(),
+                    )
+                })?;
         } else if password == "" && private_key_string != "" {
             // private key
+            sess.userauth_pubkey_memory(&self.username, None, private_key_string, None)
+                .map_err(|err| {
+                    PSError::ConnectinError("userauth with private key failed.".to_string())
+                })?;
         } else if password != "" && private_key_string == "" {
             // password
             sess.userauth_password(&self.username, password)
-                .map_err(|err| PSError::ConnectinError("userauth_password failed"))?;
+                .map_err(|err| PSError::ConnectinError("userauth_password failed".to_string()))?;
         } else {
             // won't happen...
         }
@@ -83,17 +93,17 @@ impl Client {
         Ok(())
     }
 
-    pub fn exists(&self, file: &str) -> Result<bool, PSError> {
+    pub fn exists(&self, file: &str) -> PSResult<bool> {
         todo!()
     }
 
-    pub fn content(&mut self, file: &str) -> Result<String, PSError> {
+    pub fn content(&mut self, file: &str) -> PSResult<String> {
         let res = self.exec(&format!("cat {}", file))?;
         // let ss: Vec<&str> = res.split('\n').collect();
         Ok(res)
     }
 
-    pub fn exec(&self, cmd: &str) -> Result<String, PSError> {
+    pub fn exec(&self, cmd: &str) -> PSResult<String> {
         match &self.sess {
             Some(s) => {
                 let cli = s.clone();
@@ -106,7 +116,7 @@ impl Client {
             }
             _ => {
                 // let _ = self.connect();
-                return Err(PSError::ConnectinError("Not Connected..."));
+                return Err(PSError::ConnectinError("Not Connected...".to_string()));
             }
         }
     }

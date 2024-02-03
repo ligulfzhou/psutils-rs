@@ -2,16 +2,18 @@ use std::io;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum PSError<'a> {
+pub enum PSError {
     #[error("ssh io error")]
     IOError(#[from] io::Error),
 
-    #[error("ssh connection error")]
-    ConnectinError(&'a str),
+    #[error("ssh connection error: {:}", .0)]
+    ConnectinError(String),
 
-    #[error("session error")]
-    SessionError(&'a str),
+    #[error("session error: {:}", .0)]
+    SessionError(String),
 
-    #[error("custom error")]
-    CustomError(&'a str),
+    #[error("custom error: {:}", .0)]
+    CustomError(String),
 }
+
+pub type PSResult<T> = Result<T, PSError>;
